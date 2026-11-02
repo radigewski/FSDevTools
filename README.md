@@ -28,6 +28,26 @@ an option is provided.
 
 All default values can be overridden by supplying command line options during execution.
 
+## Automatic runtime update (api-lib)
+
+FirstSpirit requires the `fs-isolated-runtime.jar` of a client to exactly match the server version. To avoid manually
+replacing the jar for every server, the cli supports an `api-lib` directory (next to the `lib` directory) that may
+contain one runtime jar per server version (e.g. `api-lib/fs-isolated-runtime-5.2.260513.jar`):
+
+- The start scripts put the newest jar from `api-lib` on the classpath (runtime jars should then no longer be placed in `lib`).
+- For HTTP(S) connections the cli checks the server version via `http(s)://<host>:<port>/version.txt` BEFORE
+  connecting and directly restarts itself with the matching runtime jar from `api-lib`.
+- If the version cannot be checked upfront (e.g. SOCKET connections) and the connect fails with a version mismatch,
+  the same mechanism acts as a fallback: the cli automatically downloads the matching runtime jar from the server
+  (`data/fslib/fs-isolated-runtime.jar`, no authentication required) into the `api-lib` directory and restarts
+  itself with the downloaded jar. Already downloaded versions are reused.
+- The automatic update can be disabled with `-Dfs-cli.autoUpdate=false` or the environment variable
+  `FS_CLI_AUTO_UPDATE=false`.
+
+Note: the download requires a runtime jar that is recent enough to talk to the server on a basic level. Runtime jars
+released before ~2024 do not understand the zstd compression of current servers - in this case the matching jar has to
+be placed in `api-lib` manually once.
+
 ## Versioning Scheme
 
 Starting from version **3.0.0**, the `FSDevTools` follows
